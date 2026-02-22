@@ -1,422 +1,777 @@
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "EventFlow — Event Management for Professionals",
-  description:
-    "All-in-one platform for weddings, teambuildings and corporate events.",
-};
+import { useEffect, useRef, useState, useCallback } from "react";
+import "./evavio.css";
 
-export default function Home() {
+// ── Logo SVG ────────────────────────────────────────────────────────────────
+function LogoMark({ size = 38 }: { size?: number }) {
   return (
-    <main
-      className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden"
-      style={{ fontFamily: "'Georgia', serif" }}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 38 38"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ flexShrink: 0 }}
     >
-      {/* Background texture */}
-      <div
-        className="fixed inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
+      <path
+        d="M19 2 L36 19 L19 36 L2 19 Z"
+        fill="none"
+        stroke="#C9A84C"
+        strokeWidth="1"
       />
+      <path
+        d="M19 8 L30 19 L19 30 L8 19 Z"
+        fill="none"
+        stroke="#C9A84C"
+        strokeWidth="0.5"
+        opacity="0.4"
+      />
+      <circle cx="19" cy="19" r="2" fill="#C9A84C" />
+      <line x1="19" y1="6" x2="19" y2="10" stroke="#C9A84C" strokeWidth="1.5" />
+      <line
+        x1="19"
+        y1="28"
+        x2="19"
+        y2="32"
+        stroke="#C9A84C"
+        strokeWidth="1.5"
+      />
+      <line x1="6" y1="19" x2="10" y2="19" stroke="#C9A84C" strokeWidth="1.5" />
+      <line
+        x1="28"
+        y1="19"
+        x2="32"
+        y2="19"
+        stroke="#C9A84C"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="12"
+        y1="12"
+        x2="14.5"
+        y2="14.5"
+        stroke="#C9A84C"
+        strokeWidth="0.8"
+        opacity="0.6"
+      />
+      <line
+        x1="26"
+        y1="12"
+        x2="23.5"
+        y2="14.5"
+        stroke="#C9A84C"
+        strokeWidth="0.8"
+        opacity="0.6"
+      />
+      <line
+        x1="12"
+        y1="26"
+        x2="14.5"
+        y2="23.5"
+        stroke="#C9A84C"
+        strokeWidth="0.8"
+        opacity="0.6"
+      />
+      <line
+        x1="26"
+        y1="26"
+        x2="23.5"
+        y2="23.5"
+        stroke="#C9A84C"
+        strokeWidth="0.8"
+        opacity="0.6"
+      />
+    </svg>
+  );
+}
 
-      {/* Nav */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full border border-[#c9a84c] flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-[#c9a84c]" />
-          </div>
-          <span
-            className="text-xl tracking-[0.2em] text-[#c9a84c] uppercase"
-            style={{ fontFamily: "Georgia, serif", letterSpacing: "0.25em" }}
-          >
-            EventFlow
+function Logo({ small = false }: { small?: boolean }) {
+  return (
+    <a
+      href="#"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        textDecoration: "none",
+      }}
+    >
+      <LogoMark size={small ? 28 : 38} />
+      <span
+        style={{
+          fontFamily: "'Playfair Display', serif",
+          fontSize: small ? 16 : 22,
+          fontWeight: 700,
+          letterSpacing: "0.05em",
+          color: "var(--ev-text)",
+        }}
+      >
+        Ev<span style={{ color: "var(--ev-gold)" }}>av</span>io
+      </span>
+    </a>
+  );
+}
+
+// ── Custom Cursor ────────────────────────────────────────────────────────────
+function CustomCursor() {
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+  const mx = useRef(0);
+  const my = useRef(0);
+  const rx = useRef(0);
+  const ry = useRef(0);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      mx.current = e.clientX;
+      my.current = e.clientY;
+      if (cursorRef.current) {
+        cursorRef.current.style.left = e.clientX + "px";
+        cursorRef.current.style.top = e.clientY + "px";
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+
+    const animate = () => {
+      rx.current += (mx.current - rx.current) * 0.12;
+      ry.current += (my.current - ry.current) * 0.12;
+      if (ringRef.current) {
+        ringRef.current.style.left = rx.current + "px";
+        ringRef.current.style.top = ry.current + "px";
+      }
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  return (
+    <>
+      <div ref={cursorRef} className="ev-cursor" />
+      <div ref={ringRef} className="ev-cursor-ring" />
+    </>
+  );
+}
+
+// ── Scroll Reveal Hook ───────────────────────────────────────────────────────
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.15 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, visible };
+}
+
+function Reveal({
+  children,
+  delay = 0,
+  className = "",
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}) {
+  const { ref, visible } = useReveal();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(40px)",
+        transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── Counter ──────────────────────────────────────────────────────────────────
+function AnimatedCounter({
+  target,
+  suffix = "",
+}: {
+  target: number;
+  suffix?: string;
+}) {
+  const [value, setValue] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started.current) {
+          started.current = true;
+          const duration = 1600;
+          let startTime: number | null = null;
+          const step = (ts: number) => {
+            if (!startTime) startTime = ts;
+            const progress = Math.min((ts - startTime) / duration, 1);
+            const ease = 1 - Math.pow(1 - progress, 3);
+            setValue(Math.floor(ease * target));
+            if (progress < 1) requestAnimationFrame(step);
+            else setValue(target);
+          };
+          requestAnimationFrame(step);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [target]);
+
+  return (
+    <span ref={ref}>
+      {value}
+      {suffix}
+    </span>
+  );
+}
+
+// ── Ticker ───────────────────────────────────────────────────────────────────
+const tickerItems = [
+  "Kalkulátor nabídek",
+  "Správa rezervací",
+  "Správa úkolů",
+  "Klientský portál",
+  "Týmová spolupráce",
+  "Analytika & reporty",
+  "PDF export",
+  "Sledování plateb",
+];
+
+function Ticker() {
+  const doubled = [...tickerItems, ...tickerItems];
+  return (
+    <div className="ev-ticker-wrap">
+      <div className="ev-ticker">
+        {doubled.map((item, i) => (
+          <span key={i} className="ev-ticker-item">
+            {item}
           </span>
-        </div>
-        <div className="hidden md:flex items-center gap-8 text-sm text-white/50 tracking-widest uppercase">
-          <a
-            href="#features"
-            className="hover:text-[#c9a84c] transition-colors"
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Demo Calculator ───────────────────────────────────────────────────────────
+const DEMO_ROWS = [
+  { id: "r1", label: "Pronájem Srub", value: 38500 },
+  { id: "r2", label: "Ubytování — Stáje (24 nocí)", value: 12000 },
+  { id: "r3", label: "Catering — Raut (70 os.)", value: 8400 },
+  { id: "r4", label: "Wellness & Infrasauna", value: 5600 },
+  { id: "r5", label: "Výzdoba — Slavobrána", value: 3200 },
+  { id: "r6", label: "Nápoje — balíček", value: 2800 },
+];
+
+function DemoCalculator() {
+  const [active, setActive] = useState<Record<string, boolean>>(
+    Object.fromEntries(DEMO_ROWS.map((r) => [r.id, true])),
+  );
+  const [displayTotal, setDisplayTotal] = useState(70500);
+  const animRef = useRef<number>(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const [rowsVisible, setRowsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRowsVisible(true);
+          observer.unobserve(el);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const calcTotal = useCallback(
+    (state: Record<string, boolean>) =>
+      DEMO_ROWS.reduce((sum, r) => sum + (state[r.id] ? r.value : 0), 0),
+    [],
+  );
+
+  const animateTotal = useCallback((from: number, to: number) => {
+    cancelAnimationFrame(animRef.current);
+    const duration = 500;
+    let startTime: number | null = null;
+    const step = (ts: number) => {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setDisplayTotal(Math.round(from + (to - from) * ease));
+      if (progress < 1) animRef.current = requestAnimationFrame(step);
+      else setDisplayTotal(to);
+    };
+    animRef.current = requestAnimationFrame(step);
+  }, []);
+
+  const toggle = (id: string) => {
+    const prev = calcTotal(active);
+    const next = { ...active, [id]: !active[id] };
+    setActive(next);
+    animateTotal(prev, calcTotal(next));
+  };
+
+  const fmt = (n: number) => n.toLocaleString("cs-CZ") + " Kč";
+
+  return (
+    <div className="ev-demo-ui" ref={ref}>
+      <div className="ev-demo-header">
+        <span className="ev-demo-title-bar">Novákovi — Svatba 7.6.2026</span>
+        <span className="ev-demo-status">● Aktivní</span>
+      </div>
+      <div className="ev-demo-body">
+        {DEMO_ROWS.map((row, i) => (
+          <div
+            key={row.id}
+            className="ev-demo-row"
+            style={{
+              opacity: rowsVisible ? 1 : 0,
+              transform: rowsVisible ? "translateX(0)" : "translateX(-12px)",
+              transition: `opacity 0.4s ease ${i * 100}ms, transform 0.4s ease ${i * 100}ms`,
+            }}
           >
-            Features
-          </a>
-          <a href="#pricing" className="hover:text-[#c9a84c] transition-colors">
-            Pricing
-          </a>
-          <a href="#contact" className="hover:text-[#c9a84c] transition-colors">
-            Contact
-          </a>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <button
+                onClick={() => toggle(row.id)}
+                className={`ev-toggle ${active[row.id] ? "on" : ""}`}
+                aria-label={`Toggle ${row.label}`}
+              />
+              <span className="ev-demo-row-name">{row.label}</span>
+            </div>
+            <span
+              className="ev-demo-row-price"
+              style={{ opacity: active[row.id] ? 1 : 0.3 }}
+            >
+              {fmt(row.value)}
+            </span>
+          </div>
+        ))}
+        <div className="ev-demo-total">
+          <span className="ev-demo-total-label">Celkem</span>
+          <span className="ev-demo-total-price">{fmt(displayTotal)}</span>
         </div>
-        <a
-          href="#contact"
-          className="px-6 py-2 border border-[#c9a84c] text-[#c9a84c] text-sm tracking-widest uppercase hover:bg-[#c9a84c] hover:text-black transition-all duration-300"
-        >
-          Get Access
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+export default function Home() {
+  const [scrolled, setScrolled] = useState(false);
+  const [activeType, setActiveType] = useState("Svatby");
+  const [formSubmitted, setFormSubmitted] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const eventTypes = [
+    "Svatby",
+    "Teambuildingyyy",
+    "Firemní eventy",
+    "Narozeninové oslavy",
+    "Galavečery",
+    "Konference",
+    "Soukromé večeře",
+    "Venkovní festivaly",
+  ];
+
+  const features = [
+    {
+      num: "01",
+      icon: "◈",
+      title: "Kalkulátor nabídek",
+      desc: "Sestavte detailní nabídku za minuty. Hosté, prostory, catering, extras — okamžitý součet s exportem do PDF.",
+    },
+    {
+      num: "02",
+      icon: "◉",
+      title: "Kalendář rezervací",
+      desc: "Přehled všech eventů na jednom místě. Sledujte zálohy, doplatky a informace o klientech.",
+    },
+    {
+      num: "03",
+      icon: "◎",
+      title: "Správa úkolů",
+      desc: "Checklisty pro každý event. Přidělujte úkoly týmu, nastavujte termíny a nikdy na nic nezapomeňte.",
+    },
+    {
+      num: "04",
+      icon: "◐",
+      title: "Klientský portál",
+      desc: "Sdílejte detaily eventu a nabídky přímo s klienty. Profesionální a přizpůsobené vašemu branadu.",
+    },
+    {
+      num: "05",
+      icon: "◑",
+      title: "Týmová spolupráce",
+      desc: "Pozvěte personál, přidělte role a koordinujte celý tým z jednoho dashboardu.",
+    },
+    {
+      num: "06",
+      icon: "◒",
+      title: "Analytika & reporty",
+      desc: "Sledujte tržby, oblíbené služby a růst vašeho podnikání pomocí přehledných reportů.",
+    },
+  ];
+
+  return (
+    <>
+      <CustomCursor />
+
+      {/* NAV */}
+      <nav className={`ev-nav ${scrolled ? "scrolled" : ""}`}>
+        <Logo />
+        <ul className="ev-nav-links">
+          <li>
+            <a href="#funkce">Funkce</a>
+          </li>
+          <li>
+            <a href="#cenik">Ceník</a>
+          </li>
+          <li>
+            <a href="#kontakt">Kontakt</a>
+          </li>
+        </ul>
+        <a href="#kontakt" className="ev-nav-cta">
+          Získat přístup
         </a>
       </nav>
 
-      {/* Hero */}
-      <section className="relative z-10 px-8 pt-32 pb-40 text-center max-w-5xl mx-auto">
-        <p className="text-[#c9a84c] text-xs tracking-[0.4em] uppercase mb-8">
-          Professional Event Management
+      {/* HERO */}
+      <section className="ev-hero">
+        <div className="ev-hero-bg" />
+        <div className="ev-hero-grid" />
+        <p className="ev-hero-eyebrow">Správa eventů pro profesionály</p>
+        <h1 className="ev-hero-title">Každý skvělý event</h1>
+        <h1 className="ev-hero-title-2">začíná plánem.</h1>
+        <p className="ev-hero-desc">
+          Nabídky, rezervace, úkoly a koordinace týmu — vše v jednom elegantním
+          dashboardu navrženém pro event profesionály.
         </p>
-        <h1
-          className="text-5xl md:text-7xl font-light leading-tight mb-8"
-          style={{ fontFamily: "Georgia, serif" }}
-        >
-          Every great event
-          <br />
-          <span className="italic text-[#c9a84c]">begins with a plan.</span>
-        </h1>
-        <p
-          className="text-white/40 text-lg max-w-xl mx-auto mb-12 leading-relaxed"
-          style={{ fontFamily: "system-ui, sans-serif", fontWeight: 300 }}
-        >
-          Quotes, bookings, tasks and team coordination — all in one elegant
-          dashboard designed for event professionals.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="#contact"
-            className="px-10 py-4 bg-[#c9a84c] text-black text-sm tracking-widest uppercase hover:bg-[#e0c070] transition-all duration-300 font-medium"
-          >
-            Start Free Trial
+        <div className="ev-hero-actions">
+          <a href="#kontakt" className="ev-btn-primary">
+            Začít zdarma
           </a>
-          <a
-            href="#features"
-            className="px-10 py-4 border border-white/20 text-white/70 text-sm tracking-widest uppercase hover:border-white/50 hover:text-white transition-all duration-300"
-          >
-            See Features
+          <a href="#funkce" className="ev-btn-ghost">
+            Zobrazit funkce
           </a>
-        </div>
-
-        {/* Decorative line */}
-        <div className="mt-24 flex items-center gap-4">
-          <div className="flex-1 h-px bg-white/10" />
-          <div className="w-2 h-2 border border-[#c9a84c] rotate-45" />
-          <div className="flex-1 h-px bg-white/10" />
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="relative z-10 border-y border-white/5 py-16">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-0">
-          {[
-            { number: "500+", label: "Events Managed" },
-            { number: "98%", label: "Client Satisfaction" },
-            { number: "3×", label: "Faster Quoting" },
-            { number: "0 CZK", label: "To Get Started" },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className="text-center px-8 py-6 border-r border-white/5 last:border-0"
-            >
-              <div
-                className="text-3xl text-[#c9a84c] mb-2"
-                style={{ fontFamily: "Georgia, serif" }}
-              >
-                {stat.number}
-              </div>
-              <div
-                className="text-white/30 text-xs tracking-widest uppercase"
-                style={{ fontFamily: "system-ui, sans-serif" }}
-              >
-                {stat.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* TICKER */}
+      <Ticker />
 
-      {/* Features */}
-      <section
-        id="features"
-        className="relative z-10 px-8 py-32 max-w-6xl mx-auto"
-      >
-        <div className="text-center mb-20">
-          <p className="text-[#c9a84c] text-xs tracking-[0.4em] uppercase mb-4">
-            Everything You Need
-          </p>
-          <h2
-            className="text-4xl md:text-5xl font-light"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
-            Built for event <span className="italic">professionals</span>
-          </h2>
-        </div>
+      {/* STATS */}
+      <div className="ev-stats">
+        {[
+          {
+            display: (
+              <>
+                <AnimatedCounter target={500} />+
+              </>
+            ),
+            label: "Spravovaných eventů",
+          },
+          {
+            display: (
+              <>
+                <AnimatedCounter target={98} />%
+              </>
+            ),
+            label: "Spokojenost klientů",
+          },
+          { display: "3×", label: "Rychlejší kalkulace" },
+          { display: "0 Kč", label: "Pro začátek" },
+        ].map((s, i) => (
+          <Reveal key={i} delay={i * 80} className="ev-stat">
+            <div className="ev-stat-num">{s.display}</div>
+            <div className="ev-stat-label">{s.label}</div>
+          </Reveal>
+        ))}
+      </div>
 
-        <div className="grid md:grid-cols-3 gap-px bg-white/5">
-          {[
-            {
-              icon: "◈",
-              title: "Smart Quote Calculator",
-              desc: "Build detailed quotes in minutes. Guests, venue, catering, extras — instant totals with PDF export for clients.",
-            },
-            {
-              icon: "◉",
-              title: "Booking Calendar",
-              desc: "See all your events at a glance. Track deposits, balances, and client details in one organized view.",
-            },
-            {
-              icon: "◎",
-              title: "Task Management",
-              desc: "Checklists for every event. Assign tasks to your team, set deadlines, and never miss a detail.",
-            },
-            {
-              icon: "◐",
-              title: "Client Portal",
-              desc: "Share event details and quotes directly with clients. Professional and branded to your business.",
-            },
-            {
-              icon: "◑",
-              title: "Team Collaboration",
-              desc: "Invite staff, assign roles, and coordinate your whole team from one dashboard.",
-            },
-            {
-              icon: "◒",
-              title: "Analytics & Reports",
-              desc: "Track revenue, popular services, and business growth with beautiful, clear reports.",
-            },
-          ].map((feature, i) => (
-            <div
-              key={i}
-              className="bg-[#0f0f0f] p-8 hover:bg-[#141414] transition-colors group"
-            >
-              <div className="text-[#c9a84c] text-2xl mb-4 group-hover:scale-110 transition-transform inline-block">
-                {feature.icon}
-              </div>
-              <h3
-                className="text-lg mb-3 font-light"
-                style={{ fontFamily: "Georgia, serif" }}
-              >
-                {feature.title}
-              </h3>
-              <p
-                className="text-white/30 text-sm leading-relaxed"
-                style={{ fontFamily: "system-ui, sans-serif", fontWeight: 300 }}
-              >
-                {feature.desc}
+      {/* FEATURES */}
+      <section id="funkce">
+        <div className="ev-features">
+          <div className="ev-features-header">
+            <Reveal>
+              <p className="ev-section-label">Vše, co potřebujete</p>
+              <h2 className="ev-section-title">
+                Vytvořeno pro
+                <br />
+                <em style={{ fontStyle: "italic", color: "var(--ev-gold)" }}>
+                  event
+                </em>{" "}
+                profesionály
+              </h2>
+            </Reveal>
+            <Reveal delay={150}>
+              <p className="ev-section-desc">
+                Zapomeňte na Excel. Evavio je chytrý průvodce kalkulací, který
+                zpracuje vše od nabídky po výslednou fakturu — v reálném čase.
               </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Event types */}
-      <section className="relative z-10 px-8 py-20 bg-[#0d0d0d]">
-        <div className="max-w-4xl mx-auto text-center">
-          <p className="text-[#c9a84c] text-xs tracking-[0.4em] uppercase mb-4">
-            Perfect For
-          </p>
-          <h2
-            className="text-3xl font-light mb-16"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
-            Every type of <span className="italic">special event</span>
-          </h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            {[
-              "Weddings",
-              "Teambuildings",
-              "Corporate Events",
-              "Birthday Parties",
-              "Galas",
-              "Conferences",
-              "Private Dinners",
-              "Outdoor Festivals",
-            ].map((type, i) => (
-              <span
-                key={i}
-                className="px-6 py-2 border border-white/10 text-white/50 text-sm tracking-wider hover:border-[#c9a84c] hover:text-[#c9a84c] transition-all cursor-default"
-                style={{ fontFamily: "system-ui, sans-serif" }}
-              >
-                {type}
-              </span>
+            </Reveal>
+          </div>
+          <div className="ev-features-grid">
+            {features.map((f, i) => (
+              <Reveal key={f.num} delay={i * 60} className="ev-feature-card">
+                <div className="ev-feature-num">{f.num}</div>
+                <div className="ev-feature-icon">{f.icon}</div>
+                <h3 className="ev-feature-title">{f.title}</h3>
+                <p className="ev-feature-desc">{f.desc}</p>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section
-        id="pricing"
-        className="relative z-10 px-8 py-32 max-w-4xl mx-auto"
-      >
-        <div className="text-center mb-20">
-          <p className="text-[#c9a84c] text-xs tracking-[0.4em] uppercase mb-4">
-            Simple Pricing
-          </p>
-          <h2
-            className="text-4xl font-light"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
-            Start free, grow <span className="italic">without limits</span>
-          </h2>
+      {/* EVENT TYPES */}
+      <section className="ev-event-types">
+        <div className="ev-event-types-inner">
+          <Reveal>
+            <p className="ev-section-label">Ideální pro</p>
+            <h2 className="ev-section-title">
+              Každý typ
+              <br />
+              události
+            </h2>
+            <p className="ev-section-desc" style={{ marginTop: 16 }}>
+              Od intimních soukromých večeří po velké firemní konference —
+              Evavio se přizpůsobí vašemu stylu práce.
+            </p>
+          </Reveal>
+          <Reveal delay={150} className="ev-types-grid">
+            {eventTypes.map((t) => (
+              <button
+                key={t}
+                onClick={() => setActiveType(t)}
+                className={`ev-type-pill ${activeType === t ? "active" : ""}`}
+              >
+                {t}
+              </button>
+            ))}
+          </Reveal>
         </div>
+      </section>
 
-        <div className="grid md:grid-cols-2 gap-px bg-white/5">
-          <div className="bg-[#0f0f0f] p-10">
-            <p
-              className="text-white/30 text-xs tracking-widest uppercase mb-4"
-              style={{ fontFamily: "system-ui" }}
-            >
-              Starter
+      {/* DEMO */}
+      <section className="ev-demo-section">
+        <Reveal className="ev-line-dec">
+          <span>Živá kalkulace</span>
+        </Reveal>
+        <div className="ev-demo-grid">
+          <Reveal>
+            <p className="ev-section-label">Žádné Excel tabulky</p>
+            <h2 className="ev-section-title">
+              Kalkulace
+              <br />v reálném čase
+            </h2>
+            <p className="ev-section-desc" style={{ marginTop: 24 }}>
+              Klient říká &ldquo;odeberte wellness, je moc drahé&rdquo; —
+              odškrtnete položku, celková cena se aktualizuje za 1 sekundu.
+              Žádné přepočítávání, žádné chyby.
             </p>
             <div
-              className="text-4xl text-white mb-1"
-              style={{ fontFamily: "Georgia, serif" }}
-            >
-              Free
-            </div>
-            <p
-              className="text-white/20 text-sm mb-8"
-              style={{ fontFamily: "system-ui" }}
-            >
-              Forever, no credit card
-            </p>
-            <ul
-              className="space-y-3 text-sm text-white/40"
-              style={{ fontFamily: "system-ui", fontWeight: 300 }}
+              style={{
+                marginTop: 40,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
             >
               {[
-                "Up to 5 events/month",
-                "Quote calculator",
-                "Basic task lists",
-                "Email support",
-              ].map((f, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="text-[#c9a84c]">—</span> {f}
-                </li>
+                "Automatické vyplnění cen z katalogu",
+                "Historie verzí při každém odeslání",
+                "Export do PDF jedním kliknutím",
+              ].map((item) => (
+                <div
+                  key={item}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    fontSize: 14,
+                    color: "var(--ev-muted)",
+                  }}
+                >
+                  <span style={{ color: "var(--ev-gold)", fontSize: 18 }}>
+                    ✓
+                  </span>{" "}
+                  {item}
+                </div>
               ))}
-            </ul>
-            <a
-              href="#contact"
-              className="mt-8 block text-center py-3 border border-white/20 text-white/50 text-sm tracking-widest uppercase hover:border-white/50 hover:text-white transition-all"
-              style={{ fontFamily: "system-ui" }}
-            >
-              Get Started
-            </a>
-          </div>
+            </div>
+          </Reveal>
+          <Reveal delay={150}>
+            <DemoCalculator />
+          </Reveal>
+        </div>
+      </section>
 
-          <div className="bg-[#0f0f0f] p-10 relative">
-            <div
-              className="absolute top-4 right-4 px-3 py-1 bg-[#c9a84c] text-black text-xs tracking-widest uppercase"
-              style={{ fontFamily: "system-ui" }}
-            >
-              Popular
+      {/* PRICING */}
+      <section id="cenik" className="ev-pricing">
+        <div className="ev-pricing-inner">
+          <Reveal className="ev-pricing-header">
+            <p className="ev-section-label">Jednoduché ceny</p>
+            <h2 className="ev-section-title">
+              Začněte zdarma,
+              <br />
+              růst bez limitů
+            </h2>
+          </Reveal>
+          <Reveal delay={100} className="ev-pricing-grid">
+            {/* Starter */}
+            <div className="ev-plan">
+              <div className="ev-plan-name">Starter</div>
+              <div className="ev-plan-price">Zdarma</div>
+              <div className="ev-plan-period">Navždy, bez platební karty</div>
+              <ul className="ev-plan-features">
+                {[
+                  "Až 5 eventů / měsíc",
+                  "Kalkulátor nabídek",
+                  "Základní checklisty",
+                  "E-mailová podpora",
+                ].map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+              <a href="#kontakt" className="ev-plan-btn ev-plan-btn--outline">
+                Začít
+              </a>
             </div>
-            <p
-              className="text-[#c9a84c] text-xs tracking-widest uppercase mb-4"
-              style={{ fontFamily: "system-ui" }}
-            >
-              Professional
-            </p>
-            <div
-              className="text-4xl text-white mb-1"
-              style={{ fontFamily: "Georgia, serif" }}
-            >
-              990 <span className="text-xl text-white/30">CZK</span>
+            {/* Pro */}
+            <div className="ev-plan ev-plan--featured">
+              <div className="ev-plan-badge">Populární</div>
+              <div className="ev-plan-name">Professional</div>
+              <div className="ev-plan-price">990 Kč</div>
+              <div className="ev-plan-period">za měsíc</div>
+              <ul className="ev-plan-features">
+                {[
+                  "Neomezené eventy",
+                  "Kompletní kalkulátor + PDF",
+                  "Týmová spolupráce",
+                  "Klientský portál",
+                  "Analytika & reporty",
+                  "Prioritní podpora",
+                ].map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+              <a href="#kontakt" className="ev-plan-btn ev-plan-btn--gold">
+                Vyzkoušet zdarma
+              </a>
             </div>
-            <p
-              className="text-white/20 text-sm mb-8"
-              style={{ fontFamily: "system-ui" }}
-            >
-              per month
-            </p>
-            <ul
-              className="space-y-3 text-sm text-white/40"
-              style={{ fontFamily: "system-ui", fontWeight: 300 }}
-            >
-              {[
-                "Unlimited events",
-                "Full quote system + PDF",
-                "Team collaboration",
-                "Client portal",
-                "Analytics & reports",
-                "Priority support",
-              ].map((f, i) => (
-                <li key={i} className="flex items-center gap-2">
-                  <span className="text-[#c9a84c]">—</span> {f}
-                </li>
-              ))}
-            </ul>
-            <a
-              href="#contact"
-              className="mt-8 block text-center py-3 bg-[#c9a84c] text-black text-sm tracking-widest uppercase hover:bg-[#e0c070] transition-all font-medium"
-              style={{ fontFamily: "system-ui" }}
-            >
-              Start Free Trial
-            </a>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* CTA */}
-      <section
-        id="contact"
-        className="relative z-10 px-8 py-32 text-center border-t border-white/5"
-      >
-        <div className="max-w-xl mx-auto">
-          <div className="w-12 h-px bg-[#c9a84c] mx-auto mb-8" />
-          <h2
-            className="text-4xl font-light mb-6"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
-            Ready to transform
-            <br />
-            <span className="italic text-[#c9a84c]">your events business?</span>
-          </h2>
-          <p
-            className="text-white/30 mb-10 text-sm leading-relaxed"
-            style={{ fontFamily: "system-ui", fontWeight: 300 }}
-          >
-            Join event professionals who manage their weddings, teambuildings
-            and corporate events with EventFlow.
+      <section id="kontakt" className="ev-cta">
+        <div className="ev-cta-bg" />
+        <Reveal>
+          <p className="ev-section-label" style={{ marginBottom: 24 }}>
+            Jste připraveni?
           </p>
-          <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder="your@email.com"
-              className="flex-1 px-5 py-3 bg-white/5 border border-white/10 text-white placeholder-white/20 text-sm focus:outline-none focus:border-[#c9a84c] transition-colors"
-              style={{ fontFamily: "system-ui" }}
-            />
-            <button
-              type="submit"
-              className="px-8 py-3 bg-[#c9a84c] text-black text-sm tracking-widest uppercase hover:bg-[#e0c070] transition-all font-medium whitespace-nowrap"
-              style={{ fontFamily: "system-ui" }}
+        </Reveal>
+        <Reveal delay={100}>
+          <h2 className="ev-cta-title">
+            Transformujte váš
+            <br />
+            <em style={{ fontStyle: "italic", color: "var(--ev-gold)" }}>
+              eventový byznys
+            </em>
+          </h2>
+        </Reveal>
+        <Reveal delay={200}>
+          <p
+            style={{ color: "var(--ev-muted)", marginBottom: 48, fontSize: 16 }}
+          >
+            Připojte se k profesionálům, kteří spravují svatby,
+            <br />
+            teambuildingyyy a firemní eventy s Evavio.
+          </p>
+        </Reveal>
+        <Reveal delay={300}>
+          {!formSubmitted ? (
+            <form
+              className="ev-cta-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setFormSubmitted(true);
+              }}
             >
-              Get Access
-            </button>
-          </form>
-        </div>
+              <input
+                type="email"
+                className="ev-cta-input"
+                placeholder="váš@email.cz"
+                required
+              />
+              <button type="submit" className="ev-cta-submit">
+                Získat přístup
+              </button>
+            </form>
+          ) : (
+            <p
+              style={{
+                color: "var(--ev-gold)",
+                fontSize: 14,
+                letterSpacing: "0.1em",
+              }}
+            >
+              ✓ Děkujeme! Ozveme se vám co nejdříve.
+            </p>
+          )}
+        </Reveal>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 px-8 py-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-        <span
-          className="text-[#c9a84c] text-sm tracking-widest uppercase"
-          style={{ fontFamily: "Georgia, serif" }}
-        >
-          EventFlow
-        </span>
-        <p
-          className="text-white/20 text-xs tracking-wider"
-          style={{ fontFamily: "system-ui" }}
-        >
-          Built for event professionals · © 2025
+      {/* FOOTER */}
+      <footer className="ev-footer">
+        <Logo small />
+        <p className="ev-footer-copy">
+          Vytvořeno pro event profesionály · © 2025
         </p>
-        <div
-          className="flex gap-6 text-white/20 text-xs tracking-widest uppercase"
-          style={{ fontFamily: "system-ui" }}
-        >
-          <a href="#" className="hover:text-white/50 transition-colors">
-            Privacy
-          </a>
-          <a href="#" className="hover:text-white/50 transition-colors">
-            Terms
-          </a>
+        <div className="ev-footer-links">
+          <a href="#">Ochrana soukromí</a>
+          <a href="#">Podmínky</a>
         </div>
       </footer>
-    </main>
+    </>
   );
 }
