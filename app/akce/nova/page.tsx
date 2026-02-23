@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -262,7 +262,7 @@ function InputField({
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
-export default function NovaAkcePage() {
+function NovaAkcePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -1714,5 +1714,33 @@ function SimpleSidebar({ active }: { active: string }) {
         ))}
       </nav>
     </div>
+  );
+}
+
+// ─── DEFAULT EXPORT WITH SUSPENSE (required for useSearchParams) ──────────────
+
+export default function NovaAkcePage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#0c0c0f",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            style={{ color: "rgba(255,255,255,0.3)", fontFamily: "monospace" }}
+          >
+            Načítám...
+          </div>
+        </div>
+      }
+    >
+      <NovaAkcePageInner />
+    </Suspense>
   );
 }
