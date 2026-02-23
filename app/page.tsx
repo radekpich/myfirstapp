@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import "./evavio.css";
 
 // ── Logo SVG ────────────────────────────────────────────────────────────────
 function LogoMark({ size = 38 }: { size?: number }) {
